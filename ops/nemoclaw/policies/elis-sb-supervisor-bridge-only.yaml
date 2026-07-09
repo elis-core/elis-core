@@ -1,0 +1,36 @@
+version: 1
+
+preset:
+  name: elis-sb-supervisor-bridge-only
+  description: ELIS sb elis-supervisor bridge-only access to the Kanban/A2A bridge on 172.19.0.1:9510. No direct raw host A2A port access.
+
+network_policies:
+  elis-sb-supervisor-bridge-only:
+    name: elis-sb-supervisor-bridge-only
+    endpoints:
+      - host: 172.19.0.1
+        port: 9510
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/health" }
+          - allow: { method: HEAD, path: "/health" }
+          - allow: { method: GET, path: "/kanban/identity" }
+          - allow: { method: HEAD, path: "/kanban/identity" }
+          - allow: { method: GET, path: "/kanban/status" }
+          - allow: { method: HEAD, path: "/kanban/status" }
+          - allow: { method: GET, path: "/a2a/status" }
+          - allow: { method: HEAD, path: "/a2a/status" }
+          - allow: { method: GET, path: "/a2a/registry" }
+          - allow: { method: HEAD, path: "/a2a/registry" }
+          - allow: { method: GET, path: "/a2a/agents" }
+          - allow: { method: HEAD, path: "/a2a/agents" }
+          - allow: { method: GET, path: "/a2a/routes" }
+          - allow: { method: HEAD, path: "/a2a/routes" }
+          - allow: { method: POST, path: "/a2a/canary" }
+    binaries:
+      - { path: /usr/local/bin/hermes }
+      - { path: /usr/bin/python3* }
+      - { path: /opt/hermes/.venv/bin/python }
+      - { path: /usr/bin/curl }
+      - { path: /usr/local/bin/curl }
