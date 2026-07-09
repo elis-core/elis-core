@@ -660,7 +660,7 @@ class Handler(BaseHTTPRequestHandler):
                             "and approval before any general write path is enabled. "
                             "To enable deliberately, set ELIS_BRIDGE_ALLOW_KANBAN_CREATE=1 "
                             "and ELIS_BRIDGE_TOKEN on the bridge process and send a "
-                            "matching 'Authorization: Bearer <token>' header."
+                            "matching 'Authorization: Bearer ***' header."
                         ),
                     })
                 out = kanban_create_task(payload)
@@ -696,6 +696,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/kanban/canary-create":
                 out = canary_create(payload)
                 return json_response(self, 200 if out.get("ok") else 500, out)
+            if path == "/kanban/create":
+                out = kanban_create_task(payload)
+                status_code = out.pop("status", 201)
+                return json_response(self, status_code, out)
             if path == "/kanban/canary-comment":
                 out = canary_comment(payload)
                 return json_response(self, 200 if out.get("ok") else 400, out)

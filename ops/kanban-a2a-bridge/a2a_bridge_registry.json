@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "model": "bridge-mediated-a2a",
+  "principle": "Sandboxed agents may access only the ELIS Kanban/A2A bridge. Raw host A2A ports remain private localhost implementation details.",
+  "bridge": {
+    "host": "172.19.0.1",
+    "port": 9510,
+    "sandbox_facing": true,
+    "canonical": true
+  },
+  "raw_host_a2a_ports": {
+    "sandbox_facing": false,
+    "expose_directly_to_sandboxes": false,
+    "ports": {
+      "9500": {
+        "logical_agent": "elis-advisor",
+        "runtime": "host:elis-advisor",
+        "bind": "127.0.0.1:9500"
+      },
+      "9501": {
+        "logical_agent": "elis-supervisor",
+        "runtime": "host:elis-supervisor",
+        "bind": "127.0.0.1:9501"
+      },
+      "9502": {
+        "logical_agent": "elis-pm",
+        "runtime": "host:elis-pm",
+        "bind": "127.0.0.1:9502"
+      },
+      "9503": {
+        "logical_agent": "elis-github",
+        "runtime": "host:elis-github",
+        "bind": "127.0.0.1:9503"
+      }
+    }
+  },
+  "domain_project_managers": {
+    "elis-pm": {
+      "authority_class": "domain_project_manager",
+      "domain": "elis-core",
+      "canonical_board": "elis-core",
+      "active_runtime": "host:elis-pm",
+      "may_create_tasks": true,
+      "may_assign_tasks": true,
+      "may_escalate_tasks": true,
+      "may_close_tasks": true,
+      "may_request_evidence": true,
+      "may_coordinate_domain_tasks": true,
+      "may_implement": false,
+      "may_validate_own_orchestration": false,
+      "may_override_domains": []
+    },
+    "elis-slr": {
+      "authority_class": "domain_project_manager",
+      "domain": "elis-slr",
+      "canonical_board": "elis-slr",
+      "active_runtime": "host:elis-slr",
+      "may_create_tasks": true,
+      "may_assign_tasks": true,
+      "may_escalate_tasks": true,
+      "may_close_tasks": true,
+      "may_request_evidence": true,
+      "may_coordinate_domain_tasks": true,
+      "may_implement": false,
+      "may_validate_own_orchestration": false,
+      "may_override_domains": []
+    }
+  },
+  "agents": {
+    "elis-supervisor": {
+      "authority_class": "implementer_or_supervisor",
+      "domain": "elis-core",
+      "active_runtime": "host:elis-supervisor",
+      "candidate_runtime": "sb:elis-supervisor",
+      "fallback_runtime": "host:elis-supervisor",
+      "cutover_state": "candidate_not_canonical",
+      "canonical_board": "elis-core",
+      "may_create_tasks": false,
+      "may_close_tasks": false,
+      "may_implement_when_assigned": true,
+      "may_validate_own_work": false
+    },
+    "specialist_slr_agent": {
+      "authority_class": "specialist_domain_agent",
+      "domain": "elis-slr",
+      "reports_to": "elis-slr",
+      "canonical_board": null,
+      "may_create_tasks": false,
+      "may_assign_tasks": false,
+      "may_close_tasks": false,
+      "may_request_evidence": true,
+      "may_produce_domain_analysis": true,
+      "may_produce_candidate_outputs": true,
+      "may_implement": false,
+      "may_validate_own_work": false
+    },
+    "elis-github": {
+      "authority_class": "specialist_service_agent",
+      "domain": "elis-core",
+      "active_runtime": "host:elis-github",
+      "may_perform_github_operations": "only_when_explicitly_authorised_by_domain_pm_or_po",
+      "may_merge": false,
+      "may_change_secrets": false
+    }
+  },
+  "allowed_message_types": [
+    "task_request",
+    "task_state",
+    "evidence_ref",
+    "review_request",
+    "review_result",
+    "status",
+    "failure",
+    "reset_ack",
+    "capability_query",
+    "capability_response",
+    "handoff",
+    "candidate_analysis",
+    "candidate_extraction",
+    "candidate_synthesis"
+  ],
+  "hard_prohibitions": [
+    "no_po_approvals_through_a2a",
+    "no_direct_database_writes",
+    "no_secret_or_token_changes",
+    "no_unapproved_service_restarts",
+    "no_github_merges_through_a2a",
+    "no_implementer_self_validation",
+    "no_validator_modifies_artifacts_under_review",
+    "no_cross_domain_authority_override",
+    "no_direct_sandbox_access_to_raw_a2a_ports"
+  ]
+}
