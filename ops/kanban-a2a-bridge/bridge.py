@@ -670,6 +670,17 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 401, {"ok": False, "error": "unauthorized"})
 
             if path in {"/a2a/canary-send", "/a2a/canary"}:
+                if not ALLOW_KANBAN_CREATE or not _token_ok(self):
+                    return json_response(self, 403, {
+                        "ok": False,
+                        "error": "not_governed",
+                        "message": (
+                            "POST /a2a/canary-send is disabled by default. "
+                            "To enable deliberately, set ELIS_BRIDGE_ALLOW_KANBAN_CREATE=1 "
+                            "and ELIS_BRIDGE_TOKEN on the bridge process and send a "
+                            "matching 'Authorization: Bearer ***' header."
+                        ),
+                    })
                 # Do not read self.rfile here. Some do_POST flows have already
                 # consumed the request body before route dispatch; a second read
                 # can block until client timeout. The canary defaults to
