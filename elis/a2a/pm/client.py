@@ -18,6 +18,7 @@ No public URL accepted.
 """
 
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -55,13 +56,19 @@ def _build_governed_metadata(
     *,
     message_type: str = "request",
     sender_role: str = _SENDER_ROLE,
+    target_role: Optional[str] = None,
     policy_version: str = _POLICY_VERSION,
     task_ref: Optional[str] = None,
 ) -> Struct:
     """Construct a ``Struct`` with the ELIS governed metadata fields.
 
     These fields are consumed by ``validate_message()`` in the Gate 2E
-    policy module.
+    policy module. ``elis_sender_token`` is read from
+    ``ELIS_A2A_TOKEN_PM`` (see /opt/elis/local/a2a_tokens.env) — required
+    since 2026-07-30 sender authentication hardening; a message without a
+    valid token is rejected as UNAUTHENTICATED_SENDER regardless of the
+    claimed ``elis_sender_role``. ``elis_target_role`` is required for pm
+    senders — see the PM destination allowlist check in policy.py.
     """
     metadata = Struct()
     meta_dict: dict[str, str] = {
@@ -70,6 +77,11 @@ def _build_governed_metadata(
         "elis_policy_version": policy_version,
         "elis_sent_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
+    token = os.environ.get("ELIS_A2A_TOKEN_PM")
+    if token:
+        meta_dict["elis_sender_token"] = token
+    if target_role:
+        meta_dict["elis_target_role"] = target_role
     if task_ref:
         meta_dict["elis_task_ref"] = task_ref
     metadata.update(meta_dict)
@@ -120,6 +132,7 @@ class AdvisorClient:
         """
         metadata = _build_governed_metadata(
             message_type=message_type,
+            target_role="advisor",
             task_ref=task_ref,
         )
         part = ParseDict({"text": text}, Part())
@@ -252,6 +265,7 @@ class SupervisorClient:
         """
         metadata = _build_governed_metadata(
             message_type=message_type,
+            target_role="supervisor",
             task_ref=task_ref,
         )
         part = ParseDict({"text": text}, Part())
