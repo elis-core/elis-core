@@ -1,0 +1,26 @@
+[project]
+name = "elis-temporal"
+version = "0.1.0"
+description = "ELIS durable execution orchestration on Temporal (T0/T1 pre-authoritative implementation, TEMPORAL-I1)"
+requires-python = ">=3.11"
+dependencies = [
+    "temporalio>=1.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
