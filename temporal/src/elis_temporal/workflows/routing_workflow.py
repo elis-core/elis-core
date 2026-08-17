@@ -23,14 +23,22 @@ from datetime import timedelta
 from temporalio import workflow
 
 from elis_temporal.activities.types import RunAgentActivityInput
+from elis_temporal.policies.failure_taxonomy import default_hermes_activity_retry_policy
 
 
 @workflow.defn(name="RoutingWorkflow")
 class RoutingWorkflow:
     @workflow.run
     async def run(self, inp: RunAgentActivityInput) -> dict:
+        # T2 compatible extension (directive section 20): attach the bounded
+        # Hermes-failure-taxonomy retry policy so real Hermes failures
+        # actually engage Temporal's native Activity retry instead of
+        # silently returning as a "successful" result -- see
+        # policies/failure_taxonomy.py and
+        # docs/ELIS-TEMPORAL-FAILURE-RETRY-POLICY.md.
         return await workflow.execute_activity(
             "run_agent_activity",
             inp,
             start_to_close_timeout=timedelta(seconds=inp.timeout_seconds + 30),
+            retry_policy=default_hermes_activity_retry_policy(),
         )
