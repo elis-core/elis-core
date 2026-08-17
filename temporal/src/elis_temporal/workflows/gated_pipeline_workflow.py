@@ -59,7 +59,7 @@ from typing import Optional
 from temporalio import workflow
 from temporalio.exceptions import ApplicationError
 
-from elis_temporal.activities.types import RunAgentActivityInput
+from elis_temporal.activities.types import DeliverNotificationInput, RunAgentActivityInput
 from elis_temporal.policies.failure_taxonomy import (
     default_hermes_activity_retry_policy,
     is_invalid_structured_result,
@@ -68,6 +68,13 @@ from elis_temporal.policies.preflight import run_deterministic_preflight
 
 MAX_CORRECTION_CYCLES = 2
 CORRECTION_WAIT_TIMEOUT_SECONDS = 3600
+
+
+def _notification_input(kind: str, workflow_id: str, fields: dict) -> DeliverNotificationInput:
+    # Routine notification -- routed through deliver_notification_activity,
+    # which never calls the Hermes Adapter (see notification_activity.py's
+    # docstring and test_notification.py's proof of this).
+    return DeliverNotificationInput(kind=kind, workflow_id=workflow_id, fields=fields)
 
 
 class SelfValidationError(Exception):
@@ -237,9 +244,23 @@ class GatedPipelineWorkflow:
             # loop back to re-implement
 
         self._stage = "waiting_for_po"
+        await workflow.execute_activity(
+            "deliver_notification_activity",
+            _notification_input("WAITING_FOR_PO", workflow.info().workflow_id, {"gate_id": inp.po_gate_id}),
+            start_to_close_timeout=timedelta(seconds=30),
+        )
         await workflow.wait_condition(lambda: self._po_approved)
 
         self._stage = "po_approved"
+        await workflow.execute_activity(
+            "deliver_notification_activity",
+            _notification_input(
+                "GATE_COMPLETION",
+                workflow.info().workflow_id,
+                {"gate_id": self._po_approval_record["gate_id"], "po_identity": self._po_approval_record["po_identity"]},
+            ),
+            start_to_close_timeout=timedelta(seconds=30),
+        )
         return {
             "stage": self._stage,
             "implementer_result": implementer_result,

@@ -22,3 +22,10 @@ class RunAgentActivityInput:
     execution_context: Optional[dict[str, Any]] = None
     correlation_id: Optional[str] = None
     timeout_seconds: int = 600
+
+
+@dataclasses.dataclass
+class DeliverNotificationInput:
+    kind: str
+    workflow_id: str
+    fields: dict[str, Any] = dataclasses.field(default_factory=dict)

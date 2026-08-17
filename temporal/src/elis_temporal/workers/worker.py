@@ -17,6 +17,7 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 from elis_temporal.activities.hermes_activity import run_agent_activity
+from elis_temporal.activities.notification_activity import deliver_notification_activity
 from elis_temporal.workers.task_queues import TASK_QUEUES
 from elis_temporal.workflows.gated_pipeline_workflow import GatedPipelineWorkflow
 from elis_temporal.workflows.profile_exclusivity_workflow import ProfileExclusivityWorkflow
@@ -36,6 +37,6 @@ def build_worker_for_profile(profile: str, client: Client, *, max_activity_worke
         # preflight -> validator + PO gate) on the same Task Queue as
         # T1's RoutingWorkflow -- no separate worker process needed.
         workflows=[RoutingWorkflow, ProfileExclusivityWorkflow, GatedPipelineWorkflow],
-        activities=[run_agent_activity],
+        activities=[run_agent_activity, deliver_notification_activity],
         activity_executor=ThreadPoolExecutor(max_workers=max_activity_workers),
     )
