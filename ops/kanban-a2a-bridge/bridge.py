@@ -11,14 +11,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-BIND_HOST = os.environ.get("ELIS_BRIDGE_HOST", "172.19.0.1")
+BIND_HOST = os.environ.get("ELIS_BRIDGE_HOST", "<bridge-ip>")
 BIND_PORT = int(os.environ.get("ELIS_BRIDGE_PORT", "9510"))
-BOARD_PATH = Path(os.environ.get("ELIS_KANBAN_DB", "/home/samurai/.hermes/kanban/boards/elis-core/kanban.db"))
-HERMES_BIN = os.environ.get("ELIS_HERMES_BIN", "/home/samurai/.local/bin/hermes")
-HOST_HERMES_HOME = os.environ.get("ELIS_HOST_HERMES_HOME", "/home/samurai/.hermes/profiles/elis-pm")
+BOARD_PATH = Path(os.path.expanduser(os.environ.get("ELIS_KANBAN_DB", "~/.hermes/kanban/boards/elis-core/kanban.db")))
+HERMES_BIN = os.path.expanduser(os.environ.get("ELIS_HERMES_BIN", "~/.local/bin/hermes"))
+HOST_HERMES_HOME = os.path.expanduser(os.environ.get("ELIS_HOST_HERMES_HOME", "~/.hermes/profiles/elis-pm"))
 KANBAN_BOARD = os.environ.get("ELIS_KANBAN_BOARD", "elis-core")
 A2A_PORTS = [9500, 9501, 9502, 9503]
-A2A_REGISTRY_PATH = Path(os.environ.get("ELIS_A2A_REGISTRY", "/opt/elis/local/kanban-a2a-bridge/a2a_bridge_registry.json"))
+A2A_REGISTRY_PATH = Path(os.environ.get("ELIS_A2A_REGISTRY", "<workspace>/local/kanban-a2a-bridge/a2a_bridge_registry.json"))
 
 # --- POST /kanban/create --- production endpoint constants ---
 ALLOWED_ASSIGNEES = frozenset({
@@ -542,7 +542,7 @@ def canary_close(payload):
     }
 
 
-A2A_CANARY_HELPER = "/opt/elis/local/kanban-a2a-bridge/a2a_canary_send.py"
+A2A_CANARY_HELPER = os.environ.get("ELIS_A2A_CANARY_HELPER", "<workspace>/local/kanban-a2a-bridge/a2a_canary_send.py")
 
 
 def _bridge_read_json_body(handler):
@@ -580,10 +580,11 @@ def a2a_canary_send(body):
         }
 
     env = os.environ.copy()
-    env["PYTHONPATH"] = "/opt/elis/repo"
+    env["PYTHONPATH"] = os.environ.get("ELIS_BRIDGE_PYTHONPATH", "<workspace>")
+    bridge_python = os.environ.get("ELIS_BRIDGE_PYTHON", "<workspace>/a2a/venv/bin/python")
 
     proc = subprocess.run(
-        ["/opt/elis/a2a/venv/bin/python", A2A_CANARY_HELPER],
+        [bridge_python, A2A_CANARY_HELPER],
         input=json.dumps({"target": target, "note": note}),
         text=True,
         capture_output=True,
