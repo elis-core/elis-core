@@ -48,7 +48,7 @@ NOTE: intentional maintenance deviation from live evidence, not hidden failure. 
 3. ELIS Research — PASS (cross-board single-dispatcher proven; worker PPID + cgroup = PM gateway, exactly one run)
 4. ELIS Advisor — PASS (exactly one run, correct profile, exact run-summary marker, config unchanged after migration to v37)
 5. ELIS Supervisor — PASS (packet-only/no-action, exactly one run, correct profile/board, config unchanged, no host/root mutation)
-6. ELIS GitHub — PASS security-critical (broker path /run/gh-agentd absent → github_app_credential declared=true authorized=true available=false executable=false → WAITING_FOR_CAPABILITY; GH_TOKEN fallback BLOCKED; PM GitHub fallback BLOCKED; rejected GitHub activity invokes Hermes FALSE; real GitHub mutation NONE; isolated gateway PID unchanged)
+6. ELIS GitHub — PASS security-critical (configured GitHub App broker socket absent → github_app_credential declared=true authorized=true available=false executable=false → WAITING_FOR_CAPABILITY; GH_TOKEN fallback BLOCKED; PM GitHub fallback BLOCKED; rejected GitHub activity invokes Hermes FALSE; real GitHub mutation NONE; isolated gateway PID unchanged)
 
 ## 6. TEMPORAL ↔ HERMES LIVE COMPATIBILITY
 - Accepted Temporal T2: `7c346445ec83842550bdfb1bee9e2fb24a3521bf`
