@@ -22,7 +22,7 @@ No OpenRouter or paid fallback may be activated for sb elis-supervisor without e
 
 sb elis-supervisor must access ELIS A2A/Kanban only through:
 
-    http://172.19.0.1:9510
+    http://<bridge-ip>:9510
 
 It must not access raw host A2A ports 9500, 9501, 9502, or 9503 directly.
 

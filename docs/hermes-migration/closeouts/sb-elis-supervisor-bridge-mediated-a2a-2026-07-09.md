@@ -15,7 +15,7 @@ The implementation follows the clean bridge-mediated model:
 
 Bridge:
 
-    172.19.0.1:9510  ELIS Kanban/A2A bridge
+    <bridge-ip>:9510  ELIS Kanban/A2A bridge
 
 Host-local A2A services, not sandbox-facing:
 
@@ -32,7 +32,7 @@ Applied custom policy:
 
 Allowed sandbox-facing bridge endpoint:
 
-    172.19.0.1:9510
+    <bridge-ip>:9510
 
 Broad policies removed from sb elis-supervisor:
 
@@ -75,14 +75,14 @@ Validated from sb elis-supervisor:
 
 Raw host A2A port negative test:
 
-    172.19.0.1:9500  not reachable
-    172.19.0.1:9501  not reachable
-    172.19.0.1:9502  not reachable
-    172.19.0.1:9503  not reachable
+    <bridge-ip>:9500  not reachable
+    <bridge-ip>:9501  not reachable
+    <bridge-ip>:9502  not reachable
+    <bridge-ip>:9503  not reachable
 
 Bridge-mediated A2A canary:
 
-    sb elis-supervisor -> 172.19.0.1:9510/a2a/canary
+    sb elis-supervisor -> <bridge-ip>:9510/a2a/canary
     bridge -> host-local A2A SDK -> 127.0.0.1:9501/a2a
     result: completed=true
     direct_db_write=false

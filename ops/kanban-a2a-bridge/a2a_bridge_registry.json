@@ -3,7 +3,7 @@
   "model": "bridge-mediated-a2a",
   "principle": "Sandboxed agents may access only the ELIS Kanban/A2A bridge. Raw host A2A ports remain private localhost implementation details.",
   "bridge": {
-    "host": "172.19.0.1",
+    "host": "<bridge-ip>",
     "port": 9510,
     "sandbox_facing": true,
     "canonical": true

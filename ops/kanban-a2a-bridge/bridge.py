@@ -581,8 +581,8 @@ def a2a_canary_send(body):
 
     env = os.environ.copy()
     env["PYTHONPATH"] = os.environ.get("ELIS_BRIDGE_PYTHONPATH", "<workspace>")
-    bridge_python = os.environ.get("ELIS_BRIDGE_PYTHON", "<workspace>/a2a/venv/bin/python")
 
+    bridge_python = os.environ.get("ELIS_BRIDGE_PYTHON", "<workspace>/a2a/venv/bin/python")
     proc = subprocess.run(
         [bridge_python, A2A_CANARY_HELPER],
         input=json.dumps({"target": target, "note": note}),
