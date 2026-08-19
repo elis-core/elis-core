@@ -1,6 +1,7 @@
 # elis-core
 
-Open AI business management lab for governed multi-agent research and operations.
+Open research and teaching AI platform for governed multi-agent workflows,
+auditable evidence, and responsible AI adoption in higher education.
 
 Canonical repository: `elis-core/elis-core` (this repository). ELIS Research
 lives in the separate canonical repository `elis-core/elis-research`.
@@ -16,8 +17,8 @@ is the accepted execution-domain ADR:
 
 ### Accepted target design (future state, per the ADR)
 
-- **ELIS Core** — `elis-core/elis-core`; Core orchestration and
-  platform/business-management workflows.
+- **ELIS Core** — `elis-core/elis-core`; Core orchestration and governed
+  platform workflows.
 - **ELIS Research** — `elis-core/elis-research`; research workflows, including
   **SLR** as a Research subdomain. The former repository identifier
   `elis-core/elis-slr` is **obsolete as a repository name**; the SLR *name*

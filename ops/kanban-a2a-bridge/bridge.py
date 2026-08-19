@@ -696,10 +696,6 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/kanban/canary-create":
                 out = canary_create(payload)
                 return json_response(self, 200 if out.get("ok") else 500, out)
-            if path == "/kanban/create":
-                out = kanban_create_task(payload)
-                status_code = out.pop("status", 201)
-                return json_response(self, status_code, out)
             if path == "/kanban/canary-comment":
                 out = canary_comment(payload)
                 return json_response(self, 200 if out.get("ok") else 400, out)
