@@ -194,10 +194,10 @@ def a2a_routes():
                 "canonical_board": "elis-core",
                 "active_runtime": registry.get("domain_project_managers", {}).get("elis-pm", {}).get("active_runtime"),
             },
-            "elis-slr": {
-                "domain": "elis-slr",
-                "canonical_board": "elis-slr",
-                "active_runtime": registry.get("domain_project_managers", {}).get("elis-slr", {}).get("active_runtime"),
+            "elis-research": {
+                "domain": "elis-research",
+                "canonical_board": "elis-research",
+                "active_runtime": registry.get("domain_project_managers", {}).get("elis-research", {}).get("active_runtime"),
             },
             "elis-supervisor": {
                 "domain": "elis-core",

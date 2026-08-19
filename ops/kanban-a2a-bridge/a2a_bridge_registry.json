@@ -50,11 +50,11 @@
       "may_validate_own_orchestration": false,
       "may_override_domains": []
     },
-    "elis-slr": {
+    "elis-research": {
       "authority_class": "domain_project_manager",
-      "domain": "elis-slr",
-      "canonical_board": "elis-slr",
-      "active_runtime": "host:elis-slr",
+      "domain": "elis-research",
+      "canonical_board": "elis-research",
+      "active_runtime": "host:elis-research",
       "may_create_tasks": true,
       "may_assign_tasks": true,
       "may_escalate_tasks": true,
@@ -83,7 +83,7 @@
     "specialist_slr_agent": {
       "authority_class": "specialist_domain_agent",
       "domain": "elis-slr",
-      "reports_to": "elis-slr",
+      "reports_to": "elis-research",
       "canonical_board": null,
       "may_create_tasks": false,
       "may_assign_tasks": false,

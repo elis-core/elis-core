@@ -94,7 +94,7 @@ Bridge-mediated A2A canary:
 The registry records:
 
 - elis-pm as peer domain project manager for elis-core;
-- elis-slr as peer domain project manager for elis-slr;
+- elis-research as peer domain project manager for elis-research;
 - sb elis-supervisor as candidate runtime for elis-supervisor;
 - host elis-supervisor as current active/fallback runtime;
 - specialist_slr_agent as SLR-domain specialist, not a project manager;
