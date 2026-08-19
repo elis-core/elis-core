@@ -1,0 +1,38 @@
+flowchart TB
+  subgraph CORE["ELIS CORE — elis-core/elis-core"]
+    CDG["Hermes DEFAULT gateway<br/>dispatch_in_gateway=true<br/>(mechanical dispatcher)"]
+    PM["elis-pm<br/>dispatch_in_gateway=false<br/>(semantic orchestrator)"]
+    CA["Core agents<br/>dispatch_in_gateway=false"]
+  end
+  subgraph RESEARCH["ELIS RESEARCH — elis-core/elis-research"]
+    RDG["Hermes DEFAULT gateway<br/>dispatch_in_gateway=true<br/>(mechanical dispatcher)"]
+    RES["elis-research<br/>dispatch_in_gateway=false<br/>(semantic orchestrator)"]
+    SLA["Research/SLR subdomain agents<br/>dispatch_in_gateway=false"]
+  end
+  subgraph GITHUB["ELIS GITHUB (isolated privileged domain)"]
+    GH["hermes-gateway-elis-github.service<br/>dispatch_in_gateway=false<br/>dedicated elis-github principal<br/>broker-mediated creds, no fallback"]
+  end
+  subgraph SUPV["ELIS SUPERVISOR CONTROL PLANE"]
+    SUP["elis-supervisor<br/>dispatch_in_gateway=false<br/>independent runtime lifecycle<br/>Host-Ops context for privileged work"]
+  end
+  subgraph TEMP["CROSS-DOMAIN DURABLE ORCHESTRATION"]
+    T["Temporal"]
+  end
+
+  CDG --> PM
+  PM --> CA
+  RDG --> RES
+  RES --> SLA
+
+  T --- CORE
+  T --- RESEARCH
+  T --- GITHUB
+  T -. plan .-> SUPV
+
+  SUP -.health/drift/diagnostics/rollback.-> CORE
+  SUP -.health/drift/diagnostics/rollback.-> RESEARCH
+  SUP -.health/drift/diagnostics/rollback.-> GITHUB
+
+  GH -. read-only broker ops .-> GITHUB
+  CA -. local dispatch .-> CDG
+  SLA -. local dispatch .-> RDG
