@@ -12,7 +12,7 @@ metadata:
     origin_repo: elis-core
     origin_skill: elis-tool-boundary
     version: 1.0.0
-    local_adapter: elis-slr
+    local_adapter: elis-research
     do_not_edit_directly: true
 ---
 
