@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime state (belongs under /home/samurai/temporal/state,logs,backups/, not this repo)
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.pid
+
+# OS/editor cruft
+.DS_Store
+*.swp
