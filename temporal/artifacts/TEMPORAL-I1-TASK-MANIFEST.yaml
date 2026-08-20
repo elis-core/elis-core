@@ -1,0 +1,416 @@
+# TEMPORAL-I1 Task Manifest
+#
+# STATUS: PROPOSED — NOT AUTHORITATIVE — NOT YET REVIEWED BY PM/PO.
+# Per plan v2.1 §6: Claude does not autonomously create the authoritative
+# Kanban task graph. ELIS PM reviews this manifest and creates each real
+# card once. This file is a planning artifact, not a claim that any phase
+# beyond the T0/T1 implementation work actually done this session is
+# approved, scheduled, or authorized.
+#
+# implementation_note field on T0A/T0B/T1A/T1B/T1C records what this
+# session actually built, for PM's reference when creating the real cards
+# — it is evidence to review, not a self-issued PASS.
+
+root:
+  task_key: TEMPORAL-I1-ROOT
+  title: "TEMPORAL-I1 — ELIS Temporal Orchestration Implementation"
+  phase: ROOT
+  purpose: "Root tracking card for the full T0-T5 chain per plan v2.1 §6"
+  implementer: null
+  validator: null
+  parents: []
+  root_required: false
+  github_mutation_required: false
+
+tasks:
+  - task_key: T0A
+    title: "Architecture/environment reconciliation"
+    phase: T0
+    purpose: "Reconcile temporal-pilot discovery into the permanent /home/samurai/temporal/ home; produce architecture, environment-delta, host-prerequisites docs"
+    implementer: claude-cli
+    validator: null
+    parents: [TEMPORAL-I1-ROOT]
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts:
+      - docs/TEMPORAL-I1-ARCHITECTURE.md
+      - docs/TEMPORAL-I1-ENVIRONMENT-DELTA.md
+      - docs/TEMPORAL-I1-HOST-PREREQUISITES.md
+    acceptance_checks:
+      - "permanent /home/samurai/temporal/ structure exists per plan §7"
+      - "repo boundary recommendation given, not executed"
+      - "determinism boundary (Workflow vs Activity) documented with real worked examples"
+    stop_conditions: ["no infrastructure mutation beyond docs"]
+    root_required: false
+    github_mutation_required: false
+    implementation_note: >
+      DONE this session (2026-08-16). All three docs written. Repo boundary:
+      recommended new `elis-temporal` repo, not created. See docs/ for full content.
+
+  - task_key: T0B
+    title: "Isolated Temporal installation"
+    phase: T0
+    purpose: "Install and start the pre-authoritative Temporal dev server per plan §8.2-8.3"
+    implementer: claude-cli
+    validator: null
+    parents: [T0A]
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts:
+      - deployment/start-dev/ (start/stop/health_check/namespace_init/backup/rollback scripts, VERSION.md)
+    acceptance_checks:
+      - "temporal server start-dev running, SQLite-backed, loopback-only"
+      - "dedicated elis namespace registered"
+      - "zero root action used"
+      - "checksum-verified binary"
+    stop_conditions: ["no Docker/Postgres/Elasticsearch/Kubernetes", "no non-loopback bind"]
+    root_required: false
+    github_mutation_required: false
+    implementation_note: >
+      DONE this session. Temporal CLI 1.8.2, checksum-verified, running as PID
+      tracked in state/dev-server.pid. elis namespace confirmed via
+      `temporal operator namespace describe`. health_check.sh passes.
+
+  - task_key: T0P
+    title: "PM deterministic foundation preflight"
+    phase: T0
+    purpose: "PM completeness check before Advisor validation — not yet run"
+    implementer: elis-pm
+    validator: null
+    parents: [T0B]
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: ["all T0A/T0B expected_artifacts present and match acceptance_checks"]
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED — requires PM to actually run this, not self-certifiable by Claude"
+
+  - task_key: T0V
+    title: "Advisor foundation validation"
+    phase: T0
+    purpose: "Independent validation per plan §8.6"
+    implementer: null
+    validator: elis-advisor
+    parents: [T0P]
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks:
+      - "PASS + NO_UNRESOLVED_TEMPORAL_ELIS_FOUNDATION_DEFECT"
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+
+  - task_key: T1A
+    title: "Hermes Adapter v1"
+    phase: T1
+    purpose: "Stable run_agent() boundary between Temporal and Hermes"
+    implementer: claude-cli
+    validator: null
+    parents: [T0V]
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts:
+      - app/src/elis_temporal/adapter/hermes/adapter.py
+      - docs/HERMES-ADAPTER-CONTRACT.md
+      - app/tests/unit/test_hermes_adapter.py
+    acceptance_checks:
+      - "real (non-stub) invocation of Hermes succeeds"
+      - "never raises for expected failure modes"
+      - "runtime_identity observed honestly, not assumed"
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: >
+      DONE this session, ahead of T0V/T0P sequencing (see note below). 5 unit
+      tests pass. One real live invocation against elis-ideas profile
+      confirmed genuine (not stubbed) Hermes execution, ~7s, exit 0.
+
+  - task_key: T1B
+    title: "Six-profile worker/routing implementation"
+    phase: T1
+    purpose: "Explicit Task Queue / profile / gateway / principal / capability routing for all six ELIS profiles"
+    implementer: claude-cli
+    validator: null
+    parents: [T1A]
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts:
+      - app/src/elis_temporal/profiles/routing.py
+    acceptance_checks:
+      - "grounded in live systemctl inventory, not assumption"
+      - "explicitly flags elis-github's missing persistent gateway"
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: >
+      DONE this session. 5 of 6 profiles confirmed to have live gateways;
+      elis-github confirmed dispatcher-only (no persistent gateway).
+
+  - task_key: T1C
+    title: "Execution-principal/capability model"
+    phase: T1
+    purpose: "assigned_profile == execution_profile == expected_security_principal check + pre-expensive-work capability admission"
+    implementer: claude-cli
+    validator: null
+    parents: [T1B]
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts:
+      - app/src/elis_temporal/policies/execution_context.py
+      - app/src/elis_temporal/capabilities/preflight.py
+    acceptance_checks:
+      - "mismatch case blocks deterministically"
+      - "missing capability returns WAITING_FOR_CAPABILITY, never a crash"
+      - "no personal credential fallback possible"
+      - "per-assigned-profile, not per-board (plan §17)"
+    stop_conditions:
+      - "does not invent Option-A's actual gh-agentd routing mechanism"
+    root_required: false
+    github_mutation_required: false
+    implementation_note: >
+      DONE this session. 11 unit tests pass, including the exact incident-C
+      shape (assigned elis-github, executed as elis-pm — blocks). Deliberately
+      generic re: gh-agentd internals per Option-A still being blocked (t_5d9a121f).
+
+  - task_key: T1P
+    title: "PM deterministic T1 preflight"
+    phase: T1
+    parents: [T1C]
+    implementer: elis-pm
+    validator: null
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+
+  - task_key: T1V
+    title: "Advisor routing/security validation"
+    phase: T1
+    purpose: "PASS + NO_UNRESOLVED_AGENT_ROUTING_OR_SECURITY_PRINCIPAL_DEFECT"
+    implementer: null
+    validator: elis-advisor
+    parents: [T1P]
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+
+  # T2-T5: unchanged from plan §6, NOT attempted this session — listed for
+  # completeness of the proposed chain only.
+  - task_key: T2A
+    title: "ELIS workflow primitives"
+    phase: T2
+    parents: [T1V]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED — next fork's scope"
+  - task_key: T2B
+    title: "LLM decision/activity integration"
+    phase: T2
+    parents: [T2A]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T2C
+    title: "External side-effect idempotency"
+    phase: T2
+    parents: [T2B]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: true
+    implementation_note: "NOT STARTED"
+  - task_key: T2P
+    title: "PM deterministic T2 preflight"
+    phase: T2
+    parents: [T2C]
+    implementer: elis-pm
+    validator: null
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T2V
+    title: "Advisor workflow-policy validation"
+    phase: T2
+    parents: [T2P]
+    implementer: null
+    validator: elis-advisor
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: ["PASS + NO_UNRESOLVED_ELIS_WORKFLOW_POLICY_DEFECT"]
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T3A
+    title: "Representative ELIS workflows"
+    phase: T3
+    parents: [T2V]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: true
+    implementation_note: "NOT STARTED"
+  - task_key: T3B
+    title: "ELIS integration/regression suite"
+    phase: T3
+    parents: [T3A]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T3P
+    title: "PM deterministic T3 preflight"
+    phase: T3
+    parents: [T3B]
+    implementer: elis-pm
+    validator: null
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T3V
+    title: "Advisor integration validation"
+    phase: T3
+    parents: [T3P]
+    implementer: null
+    validator: elis-advisor
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: ["PASS + NO_UNRESOLVED_ELIS_TEMPORAL_INTEGRATION_DEFECT"]
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T4A
+    title: "Migration/projection implementation"
+    phase: T4
+    parents: [T3V]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: ["Temporal->Kanban direction only, never split-brain"]
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T4B
+    title: "Cutover/rollback package"
+    phase: T4
+    parents: [T4A]
+    implementer: claude-cli
+    validator: null
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: true
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T4P
+    title: "PM deterministic T4 preflight"
+    phase: T4
+    parents: [T4B]
+    implementer: elis-pm
+    validator: null
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: []
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T4V
+    title: "Advisor migration-readiness validation"
+    phase: T4
+    parents: [T4P]
+    implementer: null
+    validator: elis-advisor
+    required_capabilities: [kanban_read]
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: ["PASS + NO_UNRESOLVED_TEMPORAL_MIGRATION_AUTHORITY_DEFECT"]
+    stop_conditions: []
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED"
+  - task_key: T5R
+    title: "First authoritative Temporal workflow readiness"
+    phase: T5
+    parents: [T4V]
+    implementer: claude-cli
+    validator: elis-advisor
+    required_capabilities: []
+    decomposable: false
+    expected_artifacts: []
+    acceptance_checks: ["separate PO cutover decision required — not implied by this manifest"]
+    stop_conditions: ["no autonomous activation, ever"]
+    root_required: false
+    github_mutation_required: false
+    implementation_note: "NOT STARTED — gated on separate, explicit PO authorization per plan §24/§29"
+
+sequencing_note: >
+  T1A/T1B/T1C were implemented in the same session as T0A/T0B, before T0P/T0V
+  formally ran (those require PM/Advisor, not Claude). This is disclosed, not
+  hidden: the plan's phase-gate structure (§6, §22) still requires T0P/T0V to
+  actually happen before T1's work is treated as validated — building T1 code
+  in parallel does not substitute for that gate. PM should decide whether to
+  sequence the real Kanban cards strictly (T0V blocks T1A's card) or review
+  both T0 and T1 evidence together, given the work already exists.
