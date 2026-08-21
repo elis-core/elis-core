@@ -1,0 +1,196 @@
+name: ELIS Core CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.11.15"
+
+jobs:
+  core-root-tests:
+    name: core-root-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11.15"
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run core root tests
+        run: |
+          python -m pytest tests/ -v \
+            --junitxml=core-root-results.xml
+
+      - name: Enforce zero skips and minimum test count
+        run: |
+          python - <<'PYEOF'
+          import xml.etree.ElementTree as ET
+          import sys
+
+          tree = ET.parse("core-root-results.xml")
+          root = tree.getroot()
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+
+          tests = int(suite.get("tests", 0))
+          failures = int(suite.get("failures", 0))
+          errors = int(suite.get("errors", 0))
+          skipped = int(suite.get("skipped", 0))
+
+          print(f"collected={tests} failures={failures} errors={errors} skipped={skipped}")
+
+          ok = True
+          if tests < 44:
+              print(f"FAIL: collected {tests} < required minimum 44")
+              ok = False
+          if failures != 0:
+              print(f"FAIL: {failures} failures")
+              ok = False
+          if errors != 0:
+              print(f"FAIL: {errors} errors")
+              ok = False
+          if skipped != 0:
+              print(f"FAIL: {skipped} skipped tests (zero skips required)")
+              ok = False
+
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+  temporal-tests:
+    name: temporal-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TEMPORAL_CLI_VERSION: "1.8.2"
+      TEMPORAL_CLI_ARCHIVE: "temporal_cli_1.8.2_linux_amd64.tar.gz"
+      TEMPORAL_CLI_SHA256: "d8421bda989e6514b4bdb4d63a9012a8a05a806892e881a5aad8510496349a94"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11.15"
+
+      - name: Install Temporal Python project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e temporal[dev]
+          python -m pip install "temporalio==1.31.0"
+          python -c "import temporalio; print(temporalio.__version__)"
+          INSTALLED=$(python -c "import temporalio; print(temporalio.__version__)")
+          if [ "$INSTALLED" != "1.31.0" ]; then
+            echo "FAIL: expected temporalio==1.31.0, got $INSTALLED"
+            exit 1
+          fi
+
+      - name: Download, verify, and install Temporal CLI
+        run: |
+          set -euo pipefail
+          curl -sL -o "$TEMPORAL_CLI_ARCHIVE" \
+            "https://github.com/temporalio/cli/releases/download/v${TEMPORAL_CLI_VERSION}/${TEMPORAL_CLI_ARCHIVE}"
+          echo "${TEMPORAL_CLI_SHA256}  ${TEMPORAL_CLI_ARCHIVE}" | sha256sum -c -
+          mkdir -p "$HOME/.local/temporal-cli"
+          tar -xzf "$TEMPORAL_CLI_ARCHIVE" -C "$HOME/.local/temporal-cli"
+          echo "$HOME/.local/temporal-cli" >> "$GITHUB_PATH"
+
+      - name: Verify Temporal CLI version
+        run: |
+          export PATH="$HOME/.local/temporal-cli:$PATH"
+          temporal --version
+
+      - name: Start Temporal dev server (loopback only, ephemeral)
+        run: |
+          export PATH="$HOME/.local/temporal-cli:$PATH"
+          nohup temporal server start-dev \
+            --ip 127.0.0.1 \
+            --port 7233 \
+            --namespace elis \
+            --db-filename /tmp/temporal-ci.db \
+            > /tmp/temporal-server.log 2>&1 &
+          echo $! > /tmp/temporal-server.pid
+
+      - name: Wait for Temporal server readiness (hard fail, not skip)
+        run: |
+          export PATH="$HOME/.local/temporal-cli:$PATH"
+          for i in $(seq 1 30); do
+            if temporal operator cluster health --address 127.0.0.1:7233 2>/dev/null | grep -qi "SERVING"; then
+              echo "TEMPORAL_SERVER_REACHABLE=PASS"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "TEMPORAL_SERVER_REACHABLE=FAIL: server did not become healthy in time"
+              cat /tmp/temporal-server.log
+              exit 1
+            fi
+            sleep 2
+          done
+
+          if temporal operator namespace describe --namespace elis --address 127.0.0.1:7233 >/dev/null 2>&1; then
+            echo "ELIS_NAMESPACE_AVAILABLE=PASS"
+          else
+            echo "ELIS_NAMESPACE_AVAILABLE=FAIL: elis namespace not available"
+            exit 1
+          fi
+
+      - name: Run Temporal test suite
+        working-directory: temporal
+        run: |
+          python -m pytest tests/ -v \
+            --junitxml=../temporal-results.xml
+
+      - name: Enforce zero skips and minimum test count (closes false-green risk)
+        run: |
+          python - <<'PYEOF'
+          import xml.etree.ElementTree as ET
+          import sys
+
+          tree = ET.parse("temporal-results.xml")
+          root = tree.getroot()
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+
+          tests = int(suite.get("tests", 0))
+          failures = int(suite.get("failures", 0))
+          errors = int(suite.get("errors", 0))
+          skipped = int(suite.get("skipped", 0))
+
+          print(f"collected={tests} failures={failures} errors={errors} skipped={skipped}")
+
+          ok = True
+          if tests < 105:
+              print(f"FAIL: collected {tests} < required minimum 105")
+              ok = False
+          if failures != 0:
+              print(f"FAIL: {failures} failures")
+              ok = False
+          if errors != 0:
+              print(f"FAIL: {errors} errors")
+              ok = False
+          if skipped != 0:
+              print(f"FAIL: {skipped} skipped tests (zero skips required - a skip here likely means the server connection silently failed instead of the readiness check catching it)")
+              ok = False
+
+          sys.exit(0 if ok else 1)
+          PYEOF
+
+      - name: Stop Temporal dev server
+        if: always()
+        run: |
+          if [ -f /tmp/temporal-server.pid ]; then
+            kill "$(cat /tmp/temporal-server.pid)" 2>/dev/null || true
+          fi

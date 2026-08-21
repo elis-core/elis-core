@@ -1,6 +1,6 @@
 # TEMPORAL-I1 Environment Delta — since `temporal-pilot` discovery
 
-**This file, under `/home/samurai/temporal/app/docs/`, is the authoritative version, per the PO's 2026-08-16 structural decision consolidating all durable TEMPORAL-I1 implementation material into the single canonical `app/` Git repository.** A copy exists at the sibling path `/home/samurai/temporal/docs/TEMPORAL-I1-ENVIRONMENT-DELTA.md` — that copy is a non-authoritative working/discovery artifact, not independently maintained going forward. Do not edit both; edit only this one.
+**This file, under `elis-core/elis-core:temporal/docs/`, is the authoritative version, per the PO's 2026-08-20 structural decision migrating all durable TEMPORAL-I1 implementation material into the canonical `elis-core/elis-core` repository (history-preserving import, merge commit `4eb8075f8b2360de15da0ae4021d38fd451514a8`).** The former standalone repository at `/home/samurai/temporal/app` is retained on disk as `ROLLBACK_PROVENANCE_ONLY` — it is not independently maintained going forward and must not be treated as authoritative. Do not edit both; edit only this one.
 
 Everything below is new since the `/home/samurai/temporal-pilot/` discovery documents (2026-08-16, earlier the same day). That discovery did no installation; this pass did.
 
