@@ -27,7 +27,15 @@ The scenario: a write genuinely succeeds upstream, but the caller's acknowledgme
 
 ## GitHub/Discord: test fixtures only, not production integration
 
-Directive section 15 explicitly forbids mutating production GitHub in T2 ("Do not mutate production GitHub in T2. Use test fixtures/doubles where appropriate."). `FakeGitHubBranchTarget` (in the test file, not shipped as production code) models a "create branch at sha" operation entirely in-memory. A real GitHub-backed `SideEffectTarget` — calling through the sanctioned `elis-github`/`gh-agentd` broker path, per this platform's already-established publication boundary (`docs.temporal.io` was not needed to establish this; see this session's memory of the platform's GitHub publication runbook) — is explicitly **not built**, and is T3/T4 production-integration scope. It is structurally ready to slot in behind the same `SideEffectTarget` Protocol without any change to `apply_idempotent_side_effect` itself.
+Directive section 15 explicitly forbids mutating production GitHub in T2 ("Do not mutate production GitHub in T2. Use test fixtures/doubles where appropriate."). `FakeGitHubBranchTarget` (in the test file, not shipped as production code) models a "create branch at sha" operation entirely in-memory. A real GitHub-backed `SideEffectTarget` — calling through the sanctioned
+`elis-github` execution domain via the approved `gh`/`git` wrapper mechanism
+using short-lived GitHub App installation tokens (no `gh-agentd` /
+`gh-agent-client` broker dependency), per this platform's already-established
+publication boundary (`docs.temporal.io` was not needed to establish this; see
+this session's memory of the platform's GitHub publication runbook) — is
+explicitly **not built**, and is T3/T4 production-integration scope. It is
+structurally ready to slot in behind the same `SideEffectTarget` Protocol
+without any change to `apply_idempotent_side_effect` itself.
 
 ## Deferred / not built in T2
 
