@@ -38,16 +38,35 @@ deployed configuration, service, or ticket.
 
 ## gh-agentd role
 
-`GH_AGENTD_ROLE=ROLLBACK_ONLY`
+`GH_AGENTD_ROLE=DECOMMISSIONED` (current state)
 
-`/etc/elis/gh-agentd.acl.yaml` is unchanged since 2026-08-15: single-repo
-read-only-only allowlist (`elis-core/elis-research` only — narrower than
-the V3 two-repo scope), explicit `prohibited_operations` including
-`push`/`pr-create`/`merge`, with its one write exception gated closed by
-default for a separate, unrelated, frozen branch. The two confirmed merges
-above went through the new standalone gateway + token-wrapper path
-entirely, never through gh-agentd. gh-agentd's rollback-only status is
-therefore evidenced, not merely asserted.
+The following paragraph describes the historical state as of 2026-08-20,
+when gh-agentd was still present as rollback infrastructure:
+
+> `GH_AGENTD_ROLE=ROLLBACK_ONLY` (historical, 2026-08-20)
+>
+> `/etc/elis/gh-agentd.acl.yaml` was unchanged since 2026-08-15: single-repo
+> read-only-only allowlist (`elis-core/elis-research` only — narrower than
+> the V3 two-repo scope), explicit `prohibited_operations` including
+> `push`/`pr-create`/`merge`, with its one write exception gated closed by
+> default for a separate, unrelated, frozen branch. The two confirmed merges
+> above went through the new standalone gateway + token-wrapper path
+> entirely, never through gh-agentd. gh-agentd's rollback-only status was
+> therefore evidenced, not merely asserted.
+
+As of the completed GH-AGENTD physical decommission (recorded separately
+after 2026-08-20), this historical state is superseded:
+
+- **`GH_AGENTD_PHYSICAL_DECOMMISSION=COMPLETE`**: gh-agentd has been
+  physically decommissioned and is unavailable.
+- **`GH_AGENTD_ACL_REMOVED=YES`**: `/etc/elis/gh-agentd.acl.yaml` has been
+  removed.
+- **`GH_AGENTD_EXTENSION_NEVER_IMPLEMENTED=YES`**: the gh-agentd-extension
+  mechanism contemplated by `t_5d9a121f` was never implemented.
+- The underlying GitHub-write requirement was superseded by the standalone
+  V3 elis-github gateway + short-lived GitHub App execution path, which
+  remains the live canonical execution path.
+- `t_5d9a121f` itself is **not modified** by this reconciliation.
 
 ## `t_5d9a121f` reconciliation
 
@@ -87,6 +106,13 @@ deployed file.
 | `/etc/elis/elis-github-token-repos.conf` | N/A | Live, deployed, header text stale (see above) |
 | gh-agentd | Assumed rollback-only per Option-A framing | Confirmed unmodified, confirmed uninvolved in the two real merges |
 | `t_5d9a121f` | Open, blocked, gh-agentd-extension-based fix pending | Superseded by a different mechanism; ticket itself untouched |
+
+Since the completed GH-AGENTD physical decommission, the gh-agentd row on
+this summary supersedes to: gh-agentd physically decommissioned and
+unavailable; `/etc/elis/gh-agentd.acl.yaml` removed; the gh-agentd-extension
+mechanism contemplated by `t_5d9a121f` never implemented; the GitHub-write
+requirement carried by the live standalone V3 elis-github gateway +
+short-lived GitHub App execution path. (`t_5d9a121f` itself is not modified.)
 
 Any future T3-G1 (GitHub publication representative workflow)
 implementation should bind to the confirmed-live execution path described
