@@ -65,29 +65,11 @@ metadata:
 
 Complete toolkit for working with GitHub: authentication, pull requests, code review, issues, repository management, CI monitoring, and release management. Each section below covers a major workflow area.
 
-**Common pattern throughout:** Every operation is shown with `gh` CLI first, then a `git` + `curl` fallback for environments without `gh`. Use the auth detection flow below to determine which path to use.
+**Scope note for the production `elis-github` profile:** the reference material below is general GitHub-workflow documentation and is broader than any single operation this profile performs. Every command remains subject to **ELIS_GITHUB_EXECUTION_POLICY_V3**, the active operation tiers, and the current repository scope (`elis-core/elis-core`, `elis-core/elis-research`) defined in `SOUL.md` — a command's presence below documents general GitHub capability, not ELIS authorization to run it.
 
-## Auth Detection Boilerplate
+## Authentication Model (Production elis-github)
 
-```bash
-if command -v gh &>/dev/null && gh auth status &>/dev/null; then
-  AUTH="gh"
-else
-  AUTH="git"
-  if [ -z "$GITHUB_TOKEN" ]; then
-    if [ -f ~/.hermes/.env ] && grep -q "^GITHUB_TOKEN=" ~/.hermes/.env; then
-      GITHUB_TOKEN=$(grep "^GITHUB_TOKEN=" ~/.hermes/.env | head -1 | cut -d= -f2 | tr -d '\n\r')
-    elif grep -q "github.com" ~/.git-credentials 2>/dev/null; then
-      GITHUB_TOKEN=$(grep "github.com" ~/.git-credentials 2>/dev/null | head -1 | sed 's|https://[^:]*:\([^@]*\)@.*|\1|')
-    fi
-  fi
-fi
-
-REMOTE_URL=$(git remote get-url origin)
-OWNER_REPO=$(echo "$REMOTE_URL" | sed -E 's|.*github\.com[:/]||; s|\.git$||')
-OWNER=$(echo "$OWNER_REPO" | cut -d/ -f1)
-REPO=$(echo "$OWNER_REPO" | cut -d/ -f2)
-```
+This profile has exactly **one** executable authentication model: the approved elis-github `gh`/`git` wrappers, authenticated via the current short-lived GitHub App installation token (see **ELIS_GITHUB_EXECUTION_POLICY_V3** above). The wrappers resolve identity and repository scope themselves — there is no owner/repo auto-detection or credential-fallback boilerplate for this profile to run.
 
 ---
 
@@ -95,7 +77,9 @@ REPO=$(echo "$OWNER_REPO" | cut -d/ -f2)
 
 `references/github-auth.md` is **LEGACY / SUPERSEDED historical reference material** — do not execute any command it contains. It covers (historically) SSH, GitHub App token launcher, credential contamination detection, safe.directory pitfalls, and cross-user git permissions. Current execution authority is **ELIS_GITHUB_EXECUTION_POLICY_V3** (above): use only the approved elis-github `gh`/`git` wrappers with the current short-lived GitHub App installation token.
 
-### Quick Setup
+The generic setup methods below (`gh auth login`, `credential.helper store`, personal SSH keys, `git config --global user.*`) are **NON-EXECUTABLE generic reference only** — they describe how GitHub auth works in general, not an authorized action for this production profile. This profile must never run any of them: there is no personal-credential, generic-`GITHUB_TOKEN`, or `~/.git-credentials`/`~/.hermes/.env` fallback path.
+
+### Generic Setup Methods (reference only — not for this profile)
 
 | Method | Command |
 |--------|---------|
@@ -122,9 +106,12 @@ git checkout -b feat/description origin/main
 git add <files>
 git commit -m "feat: description"
 
-# Push and create PR
+# Push and create PR (draft — Tier 1)
 git push -u origin HEAD
-gh pr create --title "feat: description" --body "## Summary" --base main
+gh pr create --draft --title "feat: description" --body "## Summary" --base main
+
+# Take out of draft when ready (Tier 1)
+gh pr ready <N>
 
 # Verify PR
 gh pr view <N> --json number,headRefName,baseRefName,state,files,url
@@ -132,8 +119,8 @@ gh pr view <N> --json number,headRefName,baseRefName,state,files,url
 # Monitor CI
 gh pr checks --watch
 
-# Merge
-gh pr merge --squash --delete-branch
+# Merge — Tier 2: requires explicit PO approval naming this exact PR number
+gh pr merge <N> --squash --delete-branch
 ```
 
 ### Common Pitfalls
@@ -175,11 +162,9 @@ git diff main...HEAD | grep -in "password\|secret\|api_key\|token.*="
 # Set up
 git fetch origin pull/<N>/head:pr-<N>
 git checkout pr-<N>
-
-# Submit review
-gh pr review <N> --approve --body "LGTM"
-gh pr review <N> --request-changes --body "See inline comments."
 ```
+
+Formal review-verdict submission (`gh pr review --approve` / `--request-changes`) is **Tier 3 — always denied** for this profile (see `SOUL.md` Hard Limits / Operation Tiers). Do not run these commands. Inline comments that do not constitute a formal approve/request-changes verdict remain subject to the active handoff envelope's tier.
 
 ---
 
@@ -189,14 +174,18 @@ See `references/github-issues.md` for full details including creating/viewing is
 
 ### Quick Reference
 
-| Action | gh | curl |
+| Action | gh | REST reference |
 |--------|-----|------|
-| List issues | `gh issue list` | `GET /repos/o/r/issues` |
-| Create issue | `gh issue create --title "..." --body "..." --label "bug"` | `POST /repos/o/r/issues` |
-| Add labels | `gh issue edit N --add-label "bug"` | `POST /repos/o/r/issues/N/labels` |
-| Assign | `gh issue edit N --add-assignee user` | `POST /repos/o/r/issues/N/assignees` |
-| Comment | `gh issue comment N --body "..."` | `POST /repos/o/r/issues/N/comments` |
-| Close | `gh issue close N` | `PATCH /repos/o/r/issues/N` |
+| List issues | `gh issue list` | `GET /repos/o/r/issues` (read-only) |
+| Create issue | `gh issue create --title "..." --body "..." --label "bug"` | — |
+| Add labels | `gh issue edit N --add-label "bug"` | — |
+| Assign | `gh issue edit N --add-assignee user` | — |
+| Comment | `gh issue comment N --body "..."` | — |
+| Close | `gh issue close N` | — |
+
+Direct REST mutation calls (`POST`/`PATCH` against `/repos/o/r/issues*`) are **not an approved alternative execution path under V3** and have been removed from this table rather than shown as a fallback — the only production path is the approved elis-github `gh`/`git` wrappers with the short-lived GitHub App installation token (`ELIS_GITHUB_EXECUTION_POLICY_V3`).
+
+`gh issue comment` and `gh issue close` have no explicit governing tier in `SOUL.md` (Tier 1 covers `gh issue create`/`gh issue edit` only) — do not treat their presence above as authorization; confirm tier classification with PO before use.
 
 ---
 
@@ -206,14 +195,19 @@ See `references/github-repo-management.md` for full details including cloning, c
 
 ### Quick Reference
 
-| Action | gh | git + curl |
-|--------|-----|-----------|
+| Action | gh | git |
+|--------|-----|-----|
 | Clone | `gh repo clone o/r` | `git clone https://github.com/o/r.git` |
-| Create repo | `gh repo create name --public` | `curl POST /user/repos` |
-| Fork | `gh repo fork o/r --clone` | `curl POST /repos/o/r/forks` + git clone |
-| Create release | `gh release create v1.0` | `curl POST /repos/o/r/releases` |
-| Set secret | `gh secret set KEY` | `curl PUT /repos/o/r/actions/secrets/KEY` |
-| Rerun CI | `gh run rerun ID` | `curl POST /repos/o/r/actions/runs/ID/rerun` |
+| Create repo | `gh repo create name --public` | — |
+| Fork | `gh repo fork o/r --clone` | — |
+| Create release | `gh release create v1.0` | — |
+| Rerun CI | `gh run rerun ID` | — |
+
+Direct `curl` calls against the GitHub REST API for repository creation, forking, releases, or Actions reruns are **not an approved alternative execution path under V3** (the only production path is the approved elis-github `gh`/`git` wrappers with the short-lived GitHub App installation token, per `ELIS_GITHUB_EXECUTION_POLICY_V3`) and have been removed from this table rather than shown as a fallback.
+
+`gh secret set` / `gh secret delete` are **Tier 3 — always denied** for this profile and are intentionally absent from this table.
+
+`gh repo create` and `gh repo fork` are neither covered by any explicit `SOUL.md` operation tier nor by the "ordinary authorized operations" list in `ELIS_GITHUB_EXECUTION_POLICY_V3` (which covers operations on already-scoped repositories, not creating or forking a repository). This profile's authorized repository scope is fixed to `elis-core/elis-core` and `elis-core/elis-research` — do not treat their presence above as authorization; confirm tier classification and scope applicability with PO before use.
 
 ---
 
