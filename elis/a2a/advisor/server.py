@@ -32,6 +32,7 @@ from a2a.server.tasks.database_task_store import DatabaseTaskStore
 
 from elis.a2a.advisor.agent_card import ADVISOR_RPC_PATH, build_agent_card
 from elis.a2a.advisor.executor import AdvisorExecutor
+from elis.a2a.task_store_config import resolve_task_store_url
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,20 @@ logger = logging.getLogger(__name__)
 
 _card = build_agent_card()
 _executor = AdvisorExecutor()
-# SQLite-backed, survives process restart/crash (Tier 2.6). One DB file per
-# role under /opt/elis/local/, matching the a2a_tokens.env convention.
-_engine = create_async_engine("sqlite+aiosqlite:////opt/elis/local/a2a_task_store_advisor.db")
+# SQLite-backed, survives process restart/crash (Tier 2.6).
+#
+# The task-store location is configurable via ELIS_A2A_TASK_STORE_PATH (see
+# elis.a2a.task_store_config) so a dedicated, isolated per-agent systemd
+# unit can point this at its own state directory (e.g.
+# /var/lib/elis/hermes/elis-core/elis-advisor/state/a2a/task_store.db)
+# instead of the legacy shared /opt/elis/local/ location. When the
+# environment variable is unset, this falls back to the historical
+# per-role path below for transitional compatibility with the current,
+# not-yet-migrated deployment — an explicitly-set-but-invalid value fails
+# closed rather than silently falling back.
+_LEGACY_TASK_STORE_PATH = "/opt/elis/local/a2a_task_store_advisor.db"
+_task_store_url = resolve_task_store_url(legacy_default_path=_LEGACY_TASK_STORE_PATH)
+_engine = create_async_engine(_task_store_url)
 _task_store = DatabaseTaskStore(engine=_engine)
 _queue_manager = InMemoryQueueManager()
 
